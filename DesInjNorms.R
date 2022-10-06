@@ -3,6 +3,7 @@ load("dsjena17062022.Rda")
 #####################################
 ####Packages#########################
 #####################################
+library(plyr)
 library(dplyr)
 library(tidyr)
 library(gdata)
@@ -12,6 +13,8 @@ library(lmerTest)
 library(performance)
 library(multilevel)
 library(DescTools)
+library(cluster)
+library(data.table)
 #####################################
 Targets<-read_xlsx("Targets.xlsx")
 which(colnames(dsjena)=="RW01_01")
@@ -24,7 +27,7 @@ a<-rbind(jena,regensburg)
 
 ######Entfernen Datens?tze####
 
-######Z?hlen NAs pro Bedingung#####
+######Zählen NAs pro Bedingung#####
 #1 = Injunktiv Maskulin
 #2 = Injunktiv Gender
 #3 = Vorurteil Maskulin
@@ -106,6 +109,7 @@ a$SDO<-rowMeans(a[,377:392])
 hist(a$SDO)
 describe(a$SDO)
 alpha(a[,377:392])
+
 ####Identifikation
 a$Ident<-rowMeans(a[,374:376])
 describe(a$Ident)
