@@ -202,6 +202,7 @@ icc(m3)
 ####für Vorurteile 
 dprejclust<-transpose(dprej[,9:69])
 rownames(dprejclust)<-Targets$Targets
+
 ## Ward-Methode
 ward_prejclust <- agnes(dprejclust, metric = "euclidean", stand = TRUE, method = "ward")
 # desto besser lassen sich Cluster unterscheiden, > 0.5 gut)
@@ -264,6 +265,7 @@ by(injclusterfinal[,2],injclusterfinal[,1],describe)
 ####für deskriptive Normen 
 ddescclust<-transpose(ddesc[,9:69])
 rownames(ddescclust)<-Targets$Targets
+
 ## Ward-Methode
 ward_descclust <- agnes(ddescclust, metric = "euclidean", stand = TRUE, method = "ward")
 # desto besser lassen sich Cluster unterscheiden, > 0.5 gut)
@@ -366,16 +368,16 @@ plot(ward_persclust_QS, type = "b", xlab = "Number of Clusters (Ward)", ylab = "
 cluster_ward_persclust<-cutree(ward_persclust, 4)
 
 cluster_ward_persclust<-cbind(cluster_ward_persclust,dprej$RWA,dprej$SDO,dprej$Soldaten)
-by(cluster_ward_persclust[,5],cluster_ward_persclust[,1],describe)
+by(cluster_ward_persclust[,2],cluster_ward_persclust[,1],describe)
 
 
 ####Faktorenanalyse####
 #Prejudice
 factcor1<-cortable_r[1:61,1:61]
-PCA1 <- princomp(covmat = factcor)
+PCA1 <- princomp(covmat = factcor1)
 summary(PCA1, loadings = TRUE)
 plot(PCA1,type="lines")
-PCA1a_varimax <- principal(factcor, nfactors = 4, rotate = "varimax")
+PCA1a_varimax <- principal(factcor1, nfactors = 4, rotate = "varimax")
 PCA1a_varimax$loadings
 #Des
 factcor2<-cortable_r[62:122,62:122]
@@ -407,5 +409,56 @@ cor(PCA2a_varimax$loadings[,2],PCA1a_varimax$loadings[,2])
 cor(PCA2a_varimax$loadings[,3],PCA1a_varimax$loadings[,3])
 cor(PCA2a_varimax$loadings[,4],PCA1a_varimax$loadings[,4])
 
+####Kontrollen####
+summary(lm(d$RWA~d$condition))
+summary(lm(d$SDO~d$condition))
+by(d$RWA,d$condition,describe)
+by(d$SDO,d$condition,describe)
 
+####Clemens Approach####
+mean(dlong$RWA,na.rm=T)
+dlong$extremeRWA<-ifelse(dlong$RWA>mean(dlong$RWA,na.rm=T)+sd(dlong$RWA,na.rm=T),
+                         "highRWA",ifelse(dlong$RWA<mean(dlong$RWA,na.rm=T)-sd(dlong$RWA,na.rm=T)
+                                          ,"lowRWA","mediumRWA"))
 
+by(dlong$RWA,dlong$extremeRWA,mean)
+
+dlong_highRWA<-subset(dlong,dlong$extremeRWA=="highRWA")
+dlong_mediumRWA<-subset(dlong,dlong$extremeRWA=="mediumRWA")
+dlong_lowRWA<-subset(dlong,dlong$extremeRWA=="lowRWA")
+
+means_highRWA<-by(dlong_highRWA$Rating,list(dlong_highRWA$Targets,dlong_highRWA$condition),mean)
+means_mediumRWA<-by(dlong_mediumRWA$Rating,list(dlong_mediumRWA$Targets,dlong_mediumRWA$condition),mean)
+means_lowRWA<-by(dlong_lowRWA$Rating,list(dlong_lowRWA$Targets,dlong_lowRWA$condition),mean)
+
+#Spalte 1 descriptive, Spalte 2 injuctive, Spalte 3 prejudice
+corr.test(means_highRWA)
+#des inj .89 #prej inj .85 #prej des .79
+corr.test(means_mediumRWA)
+#des inj .69 #prej inj .92 #prej des .52
+corr.test(means_lowRWA)
+#des inj .02 #prej inj -.03 #prej des .89
+
+#Korrelation descriptive prejudice
+corr.test(means_highRWA[,1],means_lowRWA[,3])
+#.37
+corr.test(means_highRWA[,1],means_mediumRWA[,3])
+#.63
+corr.test(means_mediumRWA[,1],means_lowRWA[,3])
+#.24
+
+#Korrelation injunctive prejudice
+corr.test(means_highRWA[,2],means_lowRWA[,3])
+#.54
+corr.test(means_highRWA[,2],means_mediumRWA[,3])
+#.77
+corr.test(means_mediumRWA[,2],means_lowRWA[,3])
+#.80
+
+#Korrelation prejudice prejudice
+corr.test(means_highRWA[,3],means_lowRWA[,3])
+#.69
+corr.test(means_highRWA[,3],means_mediumRWA[,3])
+#.86
+corr.test(means_mediumRWA[,3],means_lowRWA[,3])
+#.91
